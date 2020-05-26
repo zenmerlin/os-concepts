@@ -9,26 +9,37 @@
 #define TRUE 1
 #define FALSE 0
 
+void display_prompt();
 void input_line(char *str, int size);
 int parse_args(char *line, char *args[]);
 void get_token(char *line, int start, int end, char *token);
+void run_cmd(char *args[]);
 
 int main(int argc, char *argv[])
 {
         char line[MAX_LINE_LEN];
         char *args[MAX_ARGS];
-        int argn;
-        int i;
+        int argn, i;
+        int running = TRUE;
         
-        printf("jsh>");
-        input_line(line, MAX_LINE_LEN);
-        printf("\nYou entered: %s\n", line);
-        argn = parse_args(line, args);
-        for (i = 0; i <= argn; i++) {
-                printf("args[%d]: %s\n", i, args[i]);
-                free(args[i]);
+        while (running) {
+                memset(line, '\0', MAX_LINE_LEN);
+                memset(args, '\0', MAX_ARGS);
+                display_prompt();
+                input_line(line, MAX_LINE_LEN);
+                argn = parse_args(line, args);
+                if (strcmp(args[0], "exit") == 0)
+                        running = FALSE;
+                run_cmd(args);
+                for (i = 0; i <= argn; i++)
+                        free(args[i]);
         }
         exit(0);
+}
+
+void display_prompt()
+{
+        printf("jsh>");
 }
 
 void input_line(char *str, int size)
@@ -82,4 +93,18 @@ void get_token(char *line, int start, int end, char *token)
         }
         t[j] = '\0';
         strcpy(token, t);
+}
+
+void run_cmd(char *args[])
+{
+        int rc;
+        rc = fork();
+        if (rc < 0) {
+                fprintf(stderr, "Fork failed\n");
+                exit(1);
+        } else if (rc == 0) {
+                execvp(args[0], args);
+        } else {
+                wait(NULL);
+        }
 }
