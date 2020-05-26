@@ -59,24 +59,27 @@ int parse_args(char *line, char *args[])
                         start = i;
                         continue;
                 }
-                if (line[i] == ' ' && in) {
+                if (line[i] == ' ' && in || line[i] == '\0' && in) {
                         in = FALSE;
                         end = i - 1;
-                        args[argn] = malloc(sizeof(char) * (end - start + 1));
+                        args[argn] = malloc(sizeof(char) * (end - start + 2));
                         get_token(line, start, end, args[argn]);
                         argn++;
                 }
+                if (line[i] == '\0')
+                        break;
         }
-        return argn;
+        return --argn;
 }
 
 void get_token(char *line, int start, int end, char *token)
 {
         int i;
         int j = 0;
-        char t[end-start+1];
+        char t[end-start+2];
         for (i = start; i <= end; i++) {
                 t[j++] = line[i];
         }
+        t[j] = '\0';
         strcpy(token, t);
 }
