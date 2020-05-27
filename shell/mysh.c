@@ -3,9 +3,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <linux/limits.h>
 
-#define MAX_LINE_LEN 1000 /* Max line length */
-#define MAX_ARGS 80 /* Max number of args */
+#define MAX_LINE_LEN 1000   /* Max line length */
+#define MAX_ARGS 80         /* Max number of args */
+#define MAX_USERNAME_LEN 32 /* Max length of user name */
+#define MAX_HOSTNAME_LEN 63 /* Max length of hostname */
 #define TRUE 1
 #define FALSE 0
 
@@ -39,7 +42,23 @@ int main(int argc, char *argv[])
 
 void display_prompt()
 {
-        printf("jsh>");
+        char cwd[PATH_MAX];
+        char user[MAX_USERNAME_LEN];
+        char host[MAX_HOSTNAME_LEN];
+
+        if (getlogin_r(user, sizeof(user)) != 0) {
+                perror("Error: ");
+                exit(1);
+        }
+        if (gethostname(host, sizeof(host)) < 0) {
+                perror("Error: ");
+                exit(1);
+        }
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+                perror("Error: ");
+                exit(1);
+        }
+        printf("%s@%s: %s\n$ ", user, host, cwd);
 }
 
 void input_line(char *str, int size)
@@ -70,7 +89,7 @@ int parse_args(char *line, char *args[])
                         start = i;
                         continue;
                 }
-                if (line[i] == ' ' && in || line[i] == '\0' && in) {
+                if ((line[i] == ' ' && in) || (line[i] == '\0' && in)) {
                         in = FALSE;
                         end = i - 1;
                         args[argn] = malloc(sizeof(char) * (end - start + 2));
