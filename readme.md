@@ -1,12 +1,14 @@
 # Operating Systems Learning
 
-My personal space for studying and experimenting with operating systems related topics.
+My space for experimenting with operating systems concepts. Intended for
+educational use only.
 
 ## Summary of Contents
 
 1. [c-examples](./c-examples): Sandbox for playing around with C.
 
-2. [dinosaur](./dinosaur): Problems and examples from the Dinosaur book (Operating Systems Concepts).
+2. [dinosaur](./dinosaur): Problems and examples from the Dinosaur book
+   (Operating Systems Concepts).
 
 3. [ostep](./ostep): Problems and examples from Operating Systems: Three Easy
    Pieces.
