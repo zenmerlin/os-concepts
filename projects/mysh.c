@@ -3,9 +3,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <linux/limits.h>
 
-#define MAX_LINE_LEN 1000 /* Max line length */
-#define MAX_ARGS 80 /* Max number of args */
+#define MAX_LINE_LEN 1000   /* Max line length */
+#define MAX_ARGS 80         /* Max number of args */
+#define MAX_USERNAME_LEN 32 /* Max length of user name */
+#define MAX_HOSTNAME_LEN 63 /* Max length of hostname */
 #define TRUE 1
 #define FALSE 0
 
@@ -14,6 +17,7 @@ void input_line(char *str, int size);
 int parse_args(char *line, char *args[]);
 void get_token(char *line, int start, int end, char *token);
 void run_cmd(char *args[]);
+void cd(char *path);
 
 int main(int argc, char *argv[])
 {
@@ -23,14 +27,19 @@ int main(int argc, char *argv[])
         int running = TRUE;
         
         while (running) {
-                memset(line, '\0', MAX_LINE_LEN);
-                memset(args, '\0', MAX_ARGS);
+                memset(line, '\0', sizeof(char)*MAX_LINE_LEN);
                 display_prompt();
                 input_line(line, MAX_LINE_LEN);
                 argn = parse_args(line, args);
-                if (strcmp(args[0], "exit") == 0)
+                if (strcmp(args[0], "exit") == 0) {
                         running = FALSE;
-                run_cmd(args);
+                } else if (strcmp(args[0], "cd") == 0 && argn > 0) {
+                        cd(args[1]);
+                } else if (strcmp(args[0], "cd") == 0 && argn <= 0) {
+                        printf("Error: No directory specified\n");
+                } else {
+                        run_cmd(args);
+                }
                 for (i = 0; i <= argn; i++)
                         free(args[i]);
         }
@@ -39,7 +48,23 @@ int main(int argc, char *argv[])
 
 void display_prompt()
 {
-        printf("jsh>");
+        char cwd[PATH_MAX];
+        char user[MAX_USERNAME_LEN];
+        char host[MAX_HOSTNAME_LEN];
+
+        if (getlogin_r(user, sizeof(user)) != 0) {
+                perror("Error: ");
+                exit(1);
+        }
+        if (gethostname(host, sizeof(host)) < 0) {
+                perror("Error: ");
+                exit(1);
+        }
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+                perror("Error: ");
+                exit(1);
+        }
+        printf("%s@%s: %s\n$ ", user, host, cwd);
 }
 
 void input_line(char *str, int size)
@@ -70,7 +95,7 @@ int parse_args(char *line, char *args[])
                         start = i;
                         continue;
                 }
-                if (line[i] == ' ' && in || line[i] == '\0' && in) {
+                if ((line[i] == ' ' && in) || (line[i] == '\0' && in)) {
                         in = FALSE;
                         end = i - 1;
                         args[argn] = malloc(sizeof(char) * (end - start + 2));
@@ -93,6 +118,12 @@ void get_token(char *line, int start, int end, char *token)
         }
         t[j] = '\0';
         strcpy(token, t);
+}
+
+void cd(char *path)
+{
+        if (chdir(path) != 0)
+                perror("Error: ");
 }
 
 void run_cmd(char *args[])
