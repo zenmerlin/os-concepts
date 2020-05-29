@@ -27,8 +27,7 @@ int main(int argc, char *argv[])
         int running = TRUE;
         
         while (running) {
-                memset(line, '\0', MAX_LINE_LEN);
-                memset(args, '\0', MAX_ARGS);
+                memset(line, '\0', sizeof(char)*MAX_LINE_LEN);
                 display_prompt();
                 input_line(line, MAX_LINE_LEN);
                 argn = parse_args(line, args);
